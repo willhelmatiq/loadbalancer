@@ -3,11 +3,17 @@ package com.example.hs.loadbalancer.controller;
 import com.example.hs.loadbalancer.model.Drink;
 import com.example.hs.loadbalancer.service.RestService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -39,17 +45,18 @@ public class FavouriteDrinkController {
 
 
     @GetMapping()
-    public ResponseEntity<Drink> getFavouriteDrink(@RequestHeader(name = "Authorization") String headerParam) {
+    public ResponseEntity<Drink>  getFavouriteDrink(@RequestHeader(name = "Authorization") String headerParam) {
         if (!headerParam.equals(AuthorizationHeader)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
+        HttpHeaders responseHeaders = new HttpHeaders();
         if (requestNum % 2 == 0) {
             requestNum++;
             if (doHealthCheck(instance_1Ip)) {
-                return restService.getFavouriteDrink("http://" + instance_1Ip + ":8080/v1/coffee/favourite", headerParam);
+                responseHeaders.setLocation(URI.create("http://" + instance_1Ip + ":8080/v1/coffee/favourite"));
             } else {
                 if (doHealthCheck(instance_2Ip)) {
-                    return restService.getFavouriteDrink("http://" + instance_2Ip + ":8080/v1/coffee/favourite", headerParam);
+                    responseHeaders.set("Location", "http://" + instance_2Ip + ":8080/v1/coffee/favourite");
                 } else {
                     throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
                 }
@@ -57,15 +64,16 @@ public class FavouriteDrinkController {
         } else {
             requestNum = 0;
             if (doHealthCheck(instance_2Ip)) {
-                return restService.getFavouriteDrink("http://" + instance_2Ip + ":8080/v1/coffee/favourite", headerParam);
+                responseHeaders.set("Location", "http://" + instance_2Ip + ":8080/v1/coffee/favourite");
             } else {
                 if (doHealthCheck(instance_1Ip)) {
-                    return restService.getFavouriteDrink("http://" + instance_1Ip + ":8080/v1/coffee/favourite", headerParam);
+                    responseHeaders.set("Location", "http://" + instance_1Ip + ":8080/v1/coffee/favourite");
                 } else {
                     throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
                 }
             }
         }
+        return new ResponseEntity<>(responseHeaders, HttpStatusCode.valueOf(302));
     }
 
 //    @GetMapping("/leaderboard")
