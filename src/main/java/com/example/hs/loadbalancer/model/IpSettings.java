@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class IpSettings {
 
-    private String instanse_1;
-    private String instanse_2;
+    private String instance_1;
+    private String instance_2;
 }

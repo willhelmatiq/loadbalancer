@@ -20,8 +20,8 @@ public class SetUpController {
         if (!headerParam.equals(AuthorizationHeader)) {
             return new ResponseEntity<>(null , HttpStatus.FORBIDDEN);
         }
-        instance_1Ip = ipSettings.getInstanse_1();
-        instance_2Ip = ipSettings.getInstanse_2();
+        instance_1Ip = ipSettings.getInstance_1();
+        instance_2Ip = ipSettings.getInstance_2();
         return new ResponseEntity<>(ipSettings, HttpStatus.OK);
     }
 }
