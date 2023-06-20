@@ -5,16 +5,16 @@ import com.example.hs.loadbalancer.service.RestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.example.hs.loadbalancer.controller.SetUpController.instance_1Ip;
+import static com.example.hs.loadbalancer.controller.SetUpController.instance_2Ip;
 
 
 @RestController
@@ -30,9 +30,6 @@ public class FavouriteDrinkController {
     @Autowired
     private RestService restService;
 
-
-    static final String instance_1Ip = "54.93.225.248";
-    static final String instance_2Ip = "3.122.127.112";
 
     static {
         Drink favouriteDrink = new Drink("espresso");
