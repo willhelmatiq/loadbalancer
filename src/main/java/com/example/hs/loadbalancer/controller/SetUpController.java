@@ -13,6 +13,7 @@ public class SetUpController {
 
     public static String instance_1Ip;
     public static String instance_2Ip;
+    public static String instance_3Ip;
 
     @PostMapping("/setinstanceips")
     public ResponseEntity<IpSettings> setInstanceIps(@RequestHeader(name = "Authorization") String headerParam,
@@ -22,6 +23,7 @@ public class SetUpController {
         }
         instance_1Ip = ipSettings.getInstance_1();
         instance_2Ip = ipSettings.getInstance_2();
+        instance_3Ip = ipSettings.getInstance_3();
         return new ResponseEntity<>(ipSettings, HttpStatus.OK);
     }
 }

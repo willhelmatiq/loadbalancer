@@ -11,4 +11,5 @@ public class IpSettings {
 
     private String instance_1;
     private String instance_2;
+    private String instance_3;
 }

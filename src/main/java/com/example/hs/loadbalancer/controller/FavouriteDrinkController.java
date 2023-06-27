@@ -2,6 +2,7 @@ package com.example.hs.loadbalancer.controller;
 
 import com.example.hs.loadbalancer.model.Drink;
 import com.example.hs.loadbalancer.service.RestService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,12 +20,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.example.hs.loadbalancer.controller.SetUpController.instance_1Ip;
-import static com.example.hs.loadbalancer.controller.SetUpController.instance_2Ip;
+import static com.example.hs.loadbalancer.controller.SetUpController.*;
 
 
 @RestController
-@RequestMapping("/v1/coffee/favourite")
+@RequestMapping("/v1/**")
 public class FavouriteDrinkController {
 
     static final String AuthorizationHeader = "my_header";
@@ -45,60 +45,68 @@ public class FavouriteDrinkController {
 
 
     @GetMapping()
-    public ResponseEntity<Drink>  getFavouriteDrink(@RequestHeader(name = "Authorization") String headerParam) {
+    public ResponseEntity<Drink>  getFavouriteDrink(@RequestHeader(name = "Authorization") String headerParam, HttpServletRequest request) {
         if (!headerParam.equals(AuthorizationHeader)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         HttpHeaders responseHeaders = new HttpHeaders();
-        if (requestNum % 2 == 0) {
+        String partUrl = request.getServletPath();
+        if (requestNum % 3 == 0) {
             requestNum++;
             if (doHealthCheck(instance_1Ip)) {
-                responseHeaders.setLocation(URI.create("http://" + instance_1Ip + ":8080/v1/coffee/favourite"));
+                responseHeaders.setLocation(URI.create(instance_1Ip.replace("host.docker.internal", "localhost") + partUrl));
             } else {
                 if (doHealthCheck(instance_2Ip)) {
-                    responseHeaders.set("Location", "http://" + instance_2Ip + ":8080/v1/coffee/favourite");
+                    responseHeaders.set("Location", instance_2Ip.replace("host.docker.internal", "localhost") + partUrl);
                 } else {
-                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+                    if (doHealthCheck(instance_3Ip)) {
+                        responseHeaders.set("Location", instance_3Ip.replace("host.docker.internal", "localhost") + partUrl);
+                    } else {
+                        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                }
+            }
+        } else if (requestNum % 3 == 1){
+            requestNum++;
+            if (doHealthCheck(instance_2Ip)) {
+                responseHeaders.set("Location", instance_2Ip + partUrl);
+            } else {
+                if (doHealthCheck(instance_1Ip)) {
+                    responseHeaders.set("Location", instance_1Ip + partUrl);
+                } else {
+                    if (doHealthCheck(instance_3Ip)) {
+                        responseHeaders.set("Location", instance_3Ip.replace("host.docker.internal", "localhost") + partUrl);
+                    } else {
+                        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+
                 }
             }
         } else {
             requestNum = 0;
-            if (doHealthCheck(instance_2Ip)) {
-                responseHeaders.set("Location", "http://" + instance_2Ip + ":8080/v1/coffee/favourite");
+            if (doHealthCheck(instance_3Ip)) {
+                responseHeaders.set("Location", instance_3Ip + partUrl);
             } else {
                 if (doHealthCheck(instance_1Ip)) {
-                    responseHeaders.set("Location", "http://" + instance_1Ip + ":8080/v1/coffee/favourite");
+                    responseHeaders.set("Location", instance_1Ip + partUrl);
                 } else {
-                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+                    if (doHealthCheck(instance_2Ip)) {
+                        responseHeaders.set("Location", instance_2Ip.replace("host.docker.internal", "localhost") + partUrl);
+                    } else {
+                        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+
                 }
             }
         }
+        System.out.println(responseHeaders.getLocation());
         return new ResponseEntity<>(responseHeaders, HttpStatusCode.valueOf(302));
     }
 
-//    @GetMapping("/leaderboard")
-//    public List<Drink> getFavouriteDrinkLeaderboard(@RequestHeader(name = "Authorization") String headerParam) {
-//        if (!headerParam.equals(AuthorizationHeader)) {
-//            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-//        }
-//        return drinks.stream().limit(3).collect(Collectors.toList());
-//    }
-//
-//    @PostMapping
-//    public Drink addFavouriteDrink(@RequestHeader(name = "Authorization") String headerParam, @RequestBody Drink drink) {
-//        if (!headerParam.equals(AuthorizationHeader)) {
-//            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-//        }
-//        if (!drinkSet.contains(drink)) {
-//            drinks.add(drink);
-//            drinkSet.add(drink);
-//            return drink;
-//        }
-//        throw new ResponseStatusException(HttpStatus.CONFLICT);
-//    }
-
     private boolean doHealthCheck(String instanceIp) {
-        String response = restService.getStatus("http://" + instanceIp + ":8080/v1/healthcheck");
+        String url = instanceIp + "/v1/healthcheck";
+        System.out.println(url);
+        String response = restService.getStatus(url);
         return "I'm alive!!!".equals(response);
     }
 
