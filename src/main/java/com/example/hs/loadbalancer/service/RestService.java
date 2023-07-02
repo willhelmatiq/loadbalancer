@@ -19,14 +19,6 @@ public class RestService {
     public RestService(RestTemplateBuilder restTemplateBuilder) {
         this.restTemplate = restTemplateBuilder.setConnectTimeout(Duration.ofMillis(500)).build();
     }
-
-
-    public ResponseEntity<Drink> getFavouriteDrink(String url, String authorizationHeader) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", authorizationHeader);
-        HttpEntity request = new HttpEntity(headers);
-        return this.restTemplate.exchange(url, HttpMethod.GET, request, Drink.class);
-    }
     public String getStatus(String url) {
         return this.restTemplate.getForObject(url, String.class);
     }
